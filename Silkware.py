@@ -89,6 +89,25 @@ content_frame.pack(side="left", fill="both", expand=True, padx=5, pady=5)
 bg_label = tk.Label(title_frame, text=ascii_art, font=("Consolas",4), fg="#FF914D", bg=title_bg, justify="left", anchor="nw")
 bg_label.place(relx=0.45, rely=0.5, anchor="center")
 
+# --- Make window draggable by title_frame ---
+def start_move(event):
+    root.x = event.x_root
+    root.y = event.y_root
+
+def do_move(event):
+    dx = event.x_root - root.x
+    dy = event.y_root - root.y
+    x = root.winfo_x() + dx
+    y = root.winfo_y() + dy
+    root.geometry(f"+{x}+{y}")
+    root.x = event.x_root
+    root.y = event.y_root
+
+title_frame.bind("<Button-1>", start_move)
+title_frame.bind("<B1-Motion>", do_move)
+bg_label.bind("<Button-1>", start_move)
+bg_label.bind("<B1-Motion>", do_move)
+
 # --- Variables ---
 do_rosary = tk.BooleanVar(value=False)
 do_health = tk.BooleanVar(value=False)
@@ -177,7 +196,7 @@ def _cheat_loop():
     try:
         if do_rosary.get(): pm.write_int(resolve_pointer_chain(pm, rosary_base, [0x350,0x10,0x60,0x0,0xD8,0xB8,0x23C]), 9999)
         if do_shards.get(): pm.write_int(resolve_pointer_chain(pm, shards_base, [0x138,0x1A8,0x10,0x60,0x0,0x110,0x908]), 9999)
-        if do_health.get(): pm.write_int(resolve_pointer_chain(pm, health_base, [0x138,0x1A8,0x10,0x60,0x0,0x110,0x21C]), 99)
+        if do_health.get(): pm.write_int(resolve_pointer_chain(pm, health_base, [0x138,0x1A8,0x10,0x60,0x0,0x110,0x21C]), 10)
         if do_soul.get(): pm.write_int(resolve_pointer_chain(pm, soul_base, [0x298,0xB80,0x308,0x20,0x78,0x250,0x240]), 18)
         if speed.get(): _do_speed()
         if flight.get(): _do_flight()
