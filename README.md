@@ -1,6 +1,10 @@
 # Silkware-SilksongCheat
 A Hollow Knight Silksong Cheat Menu
 
+
+ Pressing period closes and open the window.
+ To move the window press down on the silkware label or the dark gray around it and drag the window where you want it.
+ 
 I recommend downloading the latest release from the release tab. 
 It is the Silkware.exe it avoids any issues with needing specific python libraries.
 
