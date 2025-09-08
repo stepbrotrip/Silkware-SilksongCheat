@@ -2,6 +2,11 @@
 A Hollow Knight Silksong Cheat Menu
 
 
+ANY PROBLEMS YOU RUN INTO ARE DUE TO MEMORY ADDRESS AND OFFSETS BEING INCORRECT. 
+I WILL BE LOOKING INTO A FIX BUT IT WONT BE FOR A LITTLE WHILE. 
+IF YOU WANT A WORKING CHEAT JUST FIND THE POINTERS FROM YOUR PC USING CHEAT ENGINE AND PLUG THEM INTO THE SCRIPT.
+I WILL NOT BE EXPLAINING HOW TO DO THAT THERE ARE PLENTY OF YOUTUBE VIDEOS.
+
  Pressing period closes and open the window.
  To move the window press down on the silkware label or the dark gray around it and drag the window where you want it.
  
