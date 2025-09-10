@@ -57,12 +57,12 @@ ascii_art = r"""
 
 # --- UI setup ---
 root = tk.Tk()
-root.geometry("550x300")  # extra width for hotkey frame
+root.geometry("550x350")  # extra width for hotkey frame
 root.attributes("-topmost", True)
 root.overrideredirect(True)
 
 # Gradient border canvas
-border_canvas = tk.Canvas(root, width=540, height=290, highlightthickness=0, bd=0)
+border_canvas = tk.Canvas(root, width=540, height=340, highlightthickness=0, bd=0)
 border_canvas.pack(fill="both", expand=True)
 def draw_vertical_gradient(canvas, x0, y0, x1, y1, color1, color2):
     r1, g1, b1 = canvas.winfo_rgb(color1)
@@ -75,10 +75,10 @@ def draw_vertical_gradient(canvas, x0, y0, x1, y1, color1, color2):
         color = f"#{nr>>8:02x}{ng>>8:02x}{nb>>8:02x}"
         canvas.create_line(x0, y0+i, x1, y0+i, fill=color)
 
-draw_vertical_gradient(border_canvas, 0, 0, 550, 300, "#FF512F", "#FF914D")
+draw_vertical_gradient(border_canvas, 0, 0, 550, 350, "#FF512F", "#FF914D")
 
 outer = tk.Frame(border_canvas, bg=title_bg)
-outer.place(relx=0.5, rely=0.5, anchor="center", width=540, height=290)
+outer.place(relx=0.5, rely=0.5, anchor="center", width=540, height=340)
 
 title_frame = tk.Frame(outer, bg=title_bg, height=60)
 title_frame.pack(fill="x")
@@ -191,6 +191,44 @@ def _do_superfly():
     except: pass
 
 
+# --- HP helpers and short spray (≈3 writes) ---
+def _cur_hp_ptr():
+    return resolve_pointer_chain(pm, health_base, health_offsets)
+
+def spray_set_max_health_track(new_max=12, bytes_window=0x20):
+    """
+    Small spray: writes new_max into small ints (1..60) within a
+    0x20 window around the HP pointer. Also sets current HP = new_max.
+    """
+    try:
+        cur_addr = _cur_hp_ptr()
+        start = cur_addr - (bytes_window // 2)
+        data  = pm.read_bytes(start, bytes_window)
+        # scan in steps of 4 bytes
+        for off in range(0, bytes_window - 4, 4):
+            val = int.from_bytes(data[off:off+4], 'little', signed=True)
+            if 1 <= val <= 60:
+                try:
+                    pm.write_int(start + off, new_max)
+                except:
+                    pass
+        # sync current HP
+        try:
+            pm.write_int(cur_addr, new_max)
+        except:
+            pass
+    except Exception as e:
+        print("[SPRAY-ERR]", e)
+
+def _adjust_max_hp(delta, bytes_window=0x20):
+    """Reads current HP, adds delta, and sets it with short spray."""
+    try:
+        cur_hp = pm.read_int(_cur_hp_ptr())
+        new_hp = max(1, cur_hp + delta)
+        spray_set_max_health_track(new_hp, bytes_window)
+        print(f"[ADJUST] {cur_hp} -> {new_hp}")
+    except Exception as e:
+        print("[ADJUST-ERR]", e)
 
 def _cheat_loop():
     try:
@@ -265,6 +303,44 @@ make_check("Inf Soul", do_soul, "Gives infinite Soul", 1, 1)
 make_check("Super Speed", speed, "Fast left/right movement", 2, 0)
 make_check("Flight", flight, "Vertical flight only", 2, 1)
 make_check("Better Fly", superfly, "Fly + move fast (NOP applied) Sometimes breaks when going through objects", 3, 0)
+
+# === Indicador de HP (sólo muestra HP actual) ===
+hp_var = tk.StringVar(value="HP: ? / ?")
+hp_label = tk.Label(content_frame, textvariable=hp_var, bg=content_bg,
+                    fg=text_color, font=("Segoe UI", 10, "bold"))
+hp_label.grid(row=4, column=0, sticky="w", padx=5, pady=(10, 0))
+
+def _update_hp_label():
+    try:
+        cur_hp = pm.read_int(_cur_hp_ptr())
+        hp_var.set(f"HP: {cur_hp} / ?")
+    except:
+        pass
+    root.after(200, _update_hp_label)
+
+_update_hp_label()
+
+# === Botones de Max HP (spray corto 0x20) ===
+btn_hp12 = tk.Button(content_frame, text="Set Max HP = 12",
+                     command=lambda: spray_set_max_health_track(12, 0x20),
+                     relief="flat", background="#FF914D", foreground="#2A2A2A")
+btn_hp12.grid(row=5, column=0, sticky="w", padx=5, pady=5)
+
+btn_hp5 = tk.Button(content_frame, text="Set Max HP = 5",
+                    command=lambda: spray_set_max_health_track(5, 0x20),
+                    relief="flat", background="#FF914D", foreground="#2A2A2A")
+btn_hp5.grid(row=5, column=1, sticky="w", padx=5, pady=5)
+
+# === Botones para subir/bajar contenedores ===
+btn_hp_plus = tk.Button(content_frame, text="Max HP +1",
+                        command=lambda: _adjust_max_hp(+1),
+                        relief="flat", background="#FF914D", foreground="#2A2A2A")
+btn_hp_plus.grid(row=6, column=0, sticky="w", padx=5, pady=5)
+
+btn_hp_minus = tk.Button(content_frame, text="Max HP -1",
+                         command=lambda: _adjust_max_hp(-1),
+                         relief="flat", background="#FF914D", foreground="#2A2A2A")
+btn_hp_minus.grid(row=6, column=1, sticky="w", padx=5, pady=5)
 
 # --- Hotkey frame ---
 hotkey_frame = tk.Frame(outer, bg=dark_frame_bg)
